@@ -1,5 +1,5 @@
 // Variable para representar el monto inicial de la familia
-let montoInicial = 2000;
+let montoInicial = 0;
 
 // Función para registrar ingreso de dinero
 function registrarIngreso() {
