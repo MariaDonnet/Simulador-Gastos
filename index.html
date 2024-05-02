@@ -5,11 +5,84 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Gastos</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+        integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+
+    <title>Simulador Gastos Familiares </title>
 </head>
 
-<body>
-    <h1>Simulador de Control de Gastos Familiares</h1>
+<body class="bg-dark">
+    <header class="displayOff">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="text-uppercase text-light text-center">Plataforma para cargar Gastos / Ingresos</h2>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="col-md-6  mx-auto">
+        <div class="container-fluid">
+            <div class="row justify-content-center text-center" id="typeSelection">
+                <div class="col-md-6">
+                    <button id="selectBudget" class="btn btn-outline-primary btn-block">Ingreso</button>
+                </div>
+                <div class="col-md-6">
+                    <button id="selectExpense" class="btn btn-outline-danger btn-block">Egreso</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORMULARIO -->
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-9">
+                <form action="">
+                    <div class="form-group">
+                        <label id="fecha-label" for="fecha" class="col-sm-2 text-light">Fecha</label>
+                        <input type="date" name="fecha" id="fecha" class="form-control" placeholder="dd/mm/aaaa"
+                            required="">
+                        <small class="form-text text-secondary">Seleccionar fecha </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label id="cuenta-label" for="cuenta" class="col-sm-2 text-light">Cuenta:</label>
+                        <select id="dropdown" name="cuenta" class="form-control" required="">
+                            <option disabled="" selected="" value=""></option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="crédito">Tarjeta de crédito</option>
+                            <option value="débito">Tarjeta de débito</option>
+                            <option value="cuenta">Cuenta</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="monto-label" for="number" class="col-sm-2 text-light">Monto:</label>
+                        <input type="number" name="number" id="number" class="form-control">
+                        <small class="form-text text-secondary">Ingresar Monto</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label id="descripcion-label" for="descripcion" class="col-sm-2 text-light">Descripción:</label>
+                        <input type="text" name="descripcion" id="descripcion" class="form-control" required="">
+                        <small class="form-text text-secondary"> Ingresar Descripcion del evento con longitud entre
+                            5-12 caracteres </small>
+                    </div>
+
+                    <div class="form-group row justify-content-center">
+                        <button type="submit" id="submit" class="btn form-submit btn-outline-light col-sm-6">
+                            Grabar
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!--JS -->
     <script src="js/miarchivo.js"></script>

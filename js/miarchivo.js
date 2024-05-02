@@ -1,54 +1,156 @@
 // Variable para representar el monto inicial de la familia
 let montoInicial = 0;
 
-// Función para registrar ingreso de dinero
-function registrarIngreso() {
-    let ingreso = parseFloat(prompt("Ingrese el monto del ingreso:"));
-    if (!isNaN(ingreso) && ingreso > 0) {
-        montoInicial += ingreso;
-        alert("Se ha registrado el ingreso correctamente.");
-    } else {
-        alert("Por favor, ingrese un monto válido.");
+// Función para ver el saldo actual
+function verSaldoActual() {
+    let saldo = montoInicial
+    movimientos.forEach((movimiento) => {
+        if (movimiento.tipo.toLowerCase() === 'ingreso') {
+        saldo += movimiento.monto
+        } else {
+        saldo -= movimiento.monto
+        }
+    })
+    alert(`El saldo actual es: ${saldo} euros.`);
+}
+
+class Movimiento {
+    constructor(id, descripcion, monto, tipo, fecha) {
+        this.id = id
+        this.descripcion = descripcion
+        this.monto = monto
+        this.tipo = tipo
+        this.fecha = fecha
     }
 }
 
-// Función para registrar salida de dinero
-function registrarSalida() {
-    let salida = parseFloat(prompt("Ingrese el monto de la salida:"));
-    if (!isNaN(salida) && salida > 0 && salida <= montoInicial) {
-        montoInicial -= salida;
-        alert("Se ha registrado la salida correctamente.");
+const movimientos = []
+
+// Función que me muestre todos los movimientos realizados
+function mostrarMovimientos() {
+    let mensaje = `Lista de movimientos:
+    
+`;
+    if (movimientos.length === 0) {
+        mensaje = 'No hay movimientos registrados.'
     } else {
-        alert("Monto inválido o insuficiente.");
+        movimientos.forEach((movimiento) => {
+            mensaje += `ID: ${movimiento.id}, Descripción: ${movimiento.descripcion}, Monto: ${movimiento.monto}, Tipo: ${movimiento.tipo}, Fecha: ${movimiento.fecha}
+`;
+        })
+    }
+    alert(mensaje)
+}
+
+// Función para agregar ingresos o egresos
+function agregarMovimiento() {
+    const descripcion = prompt('Ingrese la descripción del movimiento:');
+        // Validar que la descripción no esté vacía
+        if (!descripcion) {
+            alert('La descripción no puede estar vacía.');
+            return;
+        }
+    let monto = parseFloat(prompt('Ingrese el monto del movimiento:'));
+       // Validar que el monto sea un número válido
+        if (isNaN(monto) || monto <= 0) {
+        alert('El monto ingresado no es válido.');
+        return;
+    }
+    const tipo = prompt('Ingrese el tipo de movimiento (Ingreso o Egreso):');
+    // Validar que el tipo sea "Ingreso" o "Egreso"
+    if (tipo.toLowerCase() !== 'ingreso' && tipo.toLowerCase() !== 'egreso') {
+        alert('El tipo de movimiento ingresado no es válido. Debe ser "Ingreso" o "Egreso".');
+        return;
+    }
+    
+  // Obtenemos la fecha actual
+    const fecha = new Date().toLocaleDateString();
+
+    const nuevoMovimiento = new Movimiento(
+        movimientos.length + 1,
+        descripcion,
+        monto,
+        tipo,
+        fecha,
+    )
+
+    movimientos.push(nuevoMovimiento)
+
+    alert('Se ha registrado el movimiento con éxito.')
+}
+
+// Función para filtrar un movimiento por tipo 
+function filtrarPorTipo() {
+    const tipoFiltrar = prompt("Ingrese el tipo de movimiento a filtrar (Ingreso o Egreso):");
+    const movimientosFiltrados = movimientos.filter((movimiento) => movimiento.tipo.toLowerCase() === tipoFiltrar.toLowerCase());
+
+    if (movimientosFiltrados.length === 0) {
+        alert("No se encontraron movimientos con el tipo especificado.");
+    } else {
+        let mensaje = `Movimientos de tipo ${tipoFiltrar}:
+        
+`;
+        movimientosFiltrados.forEach((movimiento) => {
+            mensaje += `ID: ${movimiento.id}, Descripción: ${movimiento.descripcion}, Monto: ${movimiento.monto}, Fecha: ${movimiento.fecha}
+`;
+        });
+        alert(mensaje);
     }
 }
 
-// Función para ver el monto actual
-function verMontoActual() {
-    alert("El monto actual es: " + montoInicial + " euros.");
+// Función para buscar un movimiento por descripción
+function buscarPorDescripcion() {
+    const descripcionBuscar = prompt("Ingrese la descripción del movimiento a buscar:");
+    const movimientosEncontrados = movimientos.filter((movimiento) => movimiento.descripcion.toLowerCase().includes(descripcionBuscar.toLowerCase()));
+
+    if (movimientosEncontrados.length === 0) {
+        alert("No se encontraron movimientos con la descripción especificada.");
+    } else {
+        let mensaje = `Movimientos con la descripción ${descripcionBuscar}:
+        
+`;
+        movimientosEncontrados.forEach((movimiento) => {
+            mensaje += `ID: ${movimiento.id}, Descripción: ${movimiento.descripcion}, Monto: ${movimiento.monto}, Tipo: ${movimiento.tipo}, Fecha: ${movimiento.fecha}
+`;
+        });
+        alert(mensaje);
+    }
 }
 
-// Ciclo do-while para mostrar las opciones al usuario
+
+let opcion;
+
 do {
-    let opcion = parseInt(prompt("Seleccione una opción:\n1. Registrar ingreso de dinero\n2. Registrar salida de dinero\n3. Ver el monto actual\n4. Salir"));
+    opcion = parseInt(prompt(`Bienvenido al sistema de gestión de ingresos familiares
+    
+    1. Registrar movimiento
+    2. Ver movimientos
+    3. Ver el saldo actual
+    4. Filtrar por tipo de movimiento
+    5. Buscar por descripción
+    Para salir, ingrese 0`));
+
     switch (opcion) {
+        case 0:
+            alert("Muchas gracias por utilizar el sistema de gestión de ingresos familiares. Lo esperamos pronto!");
+            break;
         case 1:
-            registrarIngreso();
+            agregarMovimiento();
             break;
         case 2:
-            registrarSalida();
+            mostrarMovimientos();
             break;
         case 3:
-            verMontoActual();
+            verSaldoActual();
             break;
         case 4:
-            alert("Gracias por utilizar nuestra plataforma de control de gastos.");
+            filtrarPorTipo();
+            break;
+        case 5:
+            buscarPorDescripcion();
             break;
         default:
-            alert("Opción inválida. Por favor, seleccione una opción válida.");
+            alert("Opción no válida. Por favor, seleccione una opción válida.");
+            break;
     }
-// Si la opción es 4 (Salir), salimos del bucle
-    if (opcion === 4) {
-        break;
-    }
-} while (true);
+} while (opcion !== 0);
