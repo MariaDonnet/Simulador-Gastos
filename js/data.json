@@ -1,0 +1,6 @@
+[
+    { "id": 1, "descripcion": "Salario mensual", "monto": 3000, "tipo": "ingreso", "fecha": "26/05/2024" },
+    { "id": 2, "descripcion": "Alquiler", "monto": 600, "tipo": "egreso", "fecha": "27/06/2024" },
+    { "id": 3, "descripcion": "Alimentación", "monto": 300, "tipo": "egreso", "fecha": "29/06/2024" },
+    { "id": 4, "descripcion": "Diversión", "monto": 200, "tipo": "egreso", "fecha": "31/06/2024" }
+]
