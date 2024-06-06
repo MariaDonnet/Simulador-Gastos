@@ -24,7 +24,7 @@ function cargarMovimientos() {
 // Función para procesar los movimientos cargados
 function procesarMovimientos() {
     movimientosPrecargados.forEach(movimiento => {
-        movimiento.fecha = new Date(movimiento.fecha).toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
+        movimiento.fecha = movimiento.fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
     });
     mostrarMovimientos();
     verSaldoActual();
@@ -42,7 +42,6 @@ function agregarMovimiento() {
     const tipo = document.getElementById('tipo').value;
     const fecha = document.getElementById('fecha').value;
 
-    // Validación de fecha
     const hoy = new Date(); 
     if (fecha > hoy) {
         Swal.fire({
@@ -53,7 +52,6 @@ function agregarMovimiento() {
         return;
     }
 
-    // Validación de saldo negativo para egresos
     if (tipo === 'egreso' && valor > calcularTotal('ingreso') - calcularTotal('egreso')) {
         Swal.fire({
             icon: 'error',
@@ -63,7 +61,6 @@ function agregarMovimiento() {
         return;
     }
 
-    // Validación de campos vacíos o valor inválido
     if (!descripcion || isNaN(valor) || valor <= 0 || !fecha) {
         Swal.fire({
             icon: 'error',
@@ -179,7 +176,7 @@ function eliminarMovimiento(id) {
     });
 }
 
-// EVENTOS
+//EVENTOS
 document.getElementById('btnTodos').addEventListener('click', () => mostrarMovimientos('todos'));
 document.getElementById('btnIngresos').addEventListener('click', () => mostrarMovimientos('ingreso'));
 document.getElementById('btnEgresos').addEventListener('click', () => mostrarMovimientos('egreso'));
@@ -189,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarMovimientos();
 });
 
-// LOCALSTORAGE
+//LOCALSTORAGE
 function generarIdUnico() {
     let contador = parseInt(localStorage.getItem('contadorID'), 10);
     if (isNaN(contador)) contador = 4; 
