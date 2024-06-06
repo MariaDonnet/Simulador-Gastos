@@ -9,7 +9,12 @@ function cargarMovimientos() {
         procesarMovimientos();
     } else {
         fetch("./js/data.json")
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al cargar los movimientos');
+                }
+                return response.json();
+            })
             .then(data => {
                 movimientosPrecargados = data;
                 guardarMovimientos(movimientosPrecargados);
@@ -17,6 +22,11 @@ function cargarMovimientos() {
             })
             .catch(error => {
                 console.error('Error al cargar los movimientos:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudieron cargar los movimientos desde el servidor.'
+                });
             });
     }
 }
@@ -24,7 +34,8 @@ function cargarMovimientos() {
 // Función para procesar los movimientos cargados
 function procesarMovimientos() {
     movimientosPrecargados.forEach(movimiento => {
-        movimiento.fecha = movimiento.fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
+        movimiento.fecha = new Date(movimiento.fecha); // Convertir fecha a objeto de fecha
+        movimiento.fecha = movimiento.fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
     });
     mostrarMovimientos();
     verSaldoActual();
@@ -35,48 +46,47 @@ function guardarMovimientos(movimientos) {
     localStorage.setItem('movimientos', JSON.stringify(movimientos));
 }
 
+// Función para validar un nuevo movimiento
+function validarMovimiento(descripcion, valor, fecha, tipo) {
+    const hoy = new Date();
+
+    if (!descripcion.trim()) {
+        return 'La descripción no puede estar vacía.';
+    }
+    if (isNaN(valor) || valor <= 0) {
+        return 'El valor debe ser un número positivo.';
+    }
+    if (isNaN(fecha.getTime())) {
+        return 'Fecha inválida.';
+    }
+    if (fecha.getTime() > hoy.getTime()) {
+        return 'No puedes agregar movimientos con fecha posterior al día de hoy.';
+    }
+    if (tipo === 'egreso' && valor > calcularTotal('ingreso') - calcularTotal('egreso')) {
+        return 'No tienes suficiente saldo para este egreso.';
+    }
+    return null;
+}
+
 // Función para agregar un nuevo movimiento
 function agregarMovimiento() {
     const descripcion = document.getElementById('descripcion').value;
     const valor = parseFloat(document.getElementById('valor').value);
     const tipo = document.getElementById('tipo').value;
-    const fecha = document.getElementById('fecha').value;
+    const fecha = new Date(document.getElementById('fecha').value);
 
-    const hoy = new Date(); 
-    if (fecha > hoy) {
+    const error = validarMovimiento(descripcion, valor, fecha, tipo);
+    if (error) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No puedes agregar movimientos con fecha posterior al día de hoy.'
+            text: error
         });
         return;
     }
 
-    if (tipo === 'egreso' && valor > calcularTotal('ingreso') - calcularTotal('egreso')) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'No tienes suficiente saldo para este egreso.'
-        });
-        return;
-    }
-
-    if (!descripcion || isNaN(valor) || valor <= 0 || !fecha) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Por favor complete todos los campos correctamente.'
-        });
-        return;
-    }
-
-    // Formatear la fecha
-    const fechaFormateada = fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
-
-    // Generar un nuevo ID único
+    const fechaFormateada = fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const nuevoId = generarIdUnico();
-
-    // Crear un nuevo objeto de movimiento
     const nuevoMovimiento = {
         id: nuevoId,
         descripcion: descripcion,
@@ -85,13 +95,9 @@ function agregarMovimiento() {
         fecha: fechaFormateada,
     };
 
-    // Agregar el nuevo movimiento al array de movimientos precargados
     movimientosPrecargados.push(nuevoMovimiento);
-
-    // Guardar los movimientos en localStorage
     guardarMovimientos(movimientosPrecargados);
 
-    // Limpiar los campos del formulario
     document.getElementById('descripcion').value = '';
     document.getElementById('valor').value = '';
     document.getElementById('fecha').value = '';
@@ -109,22 +115,37 @@ function agregarMovimiento() {
 // Función para mostrar los movimientos en la página
 function mostrarMovimientos(tipoFiltrado = 'todos') {
     const listaMovimientos = document.getElementById('lista-movimientos');
-
-    // Limpiar los elementos de la lista
     listaMovimientos.innerHTML = '';
 
     const movimientosFiltrados = tipoFiltrado === 'todos' ? movimientosPrecargados : movimientosPrecargados.filter(movimiento => movimiento.tipo === tipoFiltrado);
 
-    // Recorrer los movimientos filtrados y agregarlos a la lista
     movimientosFiltrados.forEach(movimiento => {
         const filaMovimiento = document.createElement('tr');
-        filaMovimiento.innerHTML = `
-            <td>${movimiento.descripcion}</td>
-            <td>${movimiento.monto}</td>
-            <td>${movimiento.tipo.charAt(0).toUpperCase() + movimiento.tipo.slice(1)}</td>
-            <td>${movimiento.fecha}</td>
-            <td><i class="fas fa-times text-danger" onclick="eliminarMovimiento(${movimiento.id})" style="cursor: pointer;"></i></td>
-        `;
+
+        const descripcion = document.createElement('td');
+        descripcion.textContent = movimiento.descripcion;
+        filaMovimiento.appendChild(descripcion);
+
+        const monto = document.createElement('td');
+        monto.textContent = movimiento.monto;
+        filaMovimiento.appendChild(monto);
+
+        const tipo = document.createElement('td');
+        tipo.textContent = movimiento.tipo.charAt(0).toUpperCase() + movimiento.tipo.slice(1);
+        filaMovimiento.appendChild(tipo);
+
+        const fecha = document.createElement('td');
+        fecha.textContent = movimiento.fecha;
+        filaMovimiento.appendChild(fecha);
+
+        const eliminar = document.createElement('td');
+        const iconoEliminar = document.createElement('i');
+        iconoEliminar.className = 'fas fa-times text-danger';
+        iconoEliminar.style.cursor = 'pointer';
+        iconoEliminar.addEventListener('click', () => eliminarMovimiento(movimiento.id));
+        eliminar.appendChild(iconoEliminar);
+        filaMovimiento.appendChild(eliminar);
+
         listaMovimientos.appendChild(filaMovimiento);
     });
 
@@ -158,11 +179,10 @@ function eliminarMovimiento(id) {
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
         confirmButtonText: 'Sí, eliminarlo',
-        cancelButtonText: 'Cancelar', 
+        cancelButtonText: 'Cancelar',
     }).then((result) => {
         if (result.isConfirmed) {
             movimientosPrecargados = movimientosPrecargados.filter(movimiento => movimiento.id !== id);
-            
             guardarMovimientos(movimientosPrecargados);
             mostrarMovimientos();
             verSaldoActual();
@@ -176,7 +196,7 @@ function eliminarMovimiento(id) {
     });
 }
 
-//EVENTOS
+// Eventos
 document.getElementById('btnTodos').addEventListener('click', () => mostrarMovimientos('todos'));
 document.getElementById('btnIngresos').addEventListener('click', () => mostrarMovimientos('ingreso'));
 document.getElementById('btnEgresos').addEventListener('click', () => mostrarMovimientos('egreso'));
@@ -186,10 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarMovimientos();
 });
 
-//LOCALSTORAGE
+// Generar un nuevo ID único
 function generarIdUnico() {
-    let contador = parseInt(localStorage.getItem('contadorID'), 10);
-    if (isNaN(contador)) contador = 4; 
+    let contador = parseInt(localStorage.getItem('contadorID'), 10) || 0;
     contador += 1;
     localStorage.setItem('contadorID', contador.toString());
     return contador;
