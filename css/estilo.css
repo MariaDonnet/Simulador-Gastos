@@ -15,10 +15,11 @@ header {
     margin-bottom: 20px;
     text-align: center;
 }
-header h1 {
+header h2 {
     font-size: 2.5rem;
     margin-bottom: 10px;
-}.agregar {
+}
+.agregar {
     margin-bottom: 20px;
     display: flex;
     flex-wrap: wrap;

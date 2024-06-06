@@ -1,33 +1,33 @@
 // Array de movimientos precargados
-let movimientosPrecargados = [];
+let movimientosPrecargados = JSON.parse(localStorage.getItem('movimientos')) || [];
 
 // Función para cargar movimientos desde data.json usando fetch
 function cargarMovimientos() {
-    // Verificar si hay movimientos en localStorage
     const movimientosEnStorage = localStorage.getItem('movimientos');
     if (movimientosEnStorage) {
         movimientosPrecargados = JSON.parse(movimientosEnStorage);
-        // Inicializar la visualización de los movimientos y el saldo
-        mostrarMovimientos();
-        verSaldoActual();
+        procesarMovimientos();
     } else {
         fetch("./js/data.json")
             .then(response => response.json())
             .then(data => {
-                data.forEach(movimiento => {
-                    // Agregar el movimiento al array de movimientos precargados
-                    movimientosPrecargados.push(movimiento);
-                });
-                // Guardar los movimientos en localStorage para persistencia
+                movimientosPrecargados = data;
                 guardarMovimientos(movimientosPrecargados);
-                // Inicializar la visualización de los movimientos y el saldo
-                mostrarMovimientos();
-                verSaldoActual();
+                procesarMovimientos();
             })
             .catch(error => {
                 console.error('Error al cargar los movimientos:', error);
             });
     }
+}
+
+// Función para procesar los movimientos cargados
+function procesarMovimientos() {
+    movimientosPrecargados.forEach(movimiento => {
+        movimiento.fecha = new Date(movimiento.fecha).toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
+    });
+    mostrarMovimientos();
+    verSaldoActual();
 }
 
 // Función para guardar movimientos en localStorage
@@ -42,7 +42,28 @@ function agregarMovimiento() {
     const tipo = document.getElementById('tipo').value;
     const fecha = document.getElementById('fecha').value;
 
-    // Validación
+    // Validación de fecha
+    const hoy = new Date(); 
+    if (fecha > hoy) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No puedes agregar movimientos con fecha posterior al día de hoy.'
+        });
+        return;
+    }
+
+    // Validación de saldo negativo para egresos
+    if (tipo === 'egreso' && valor > calcularTotal('ingreso') - calcularTotal('egreso')) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No tienes suficiente saldo para este egreso.'
+        });
+        return;
+    }
+
+    // Validación de campos vacíos o valor inválido
     if (!descripcion || isNaN(valor) || valor <= 0 || !fecha) {
         Swal.fire({
             icon: 'error',
@@ -51,6 +72,9 @@ function agregarMovimiento() {
         });
         return;
     }
+
+    // Formatear la fecha
+    const fechaFormateada = fecha.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
 
     // Generar un nuevo ID único
     const nuevoId = generarIdUnico();
@@ -61,7 +85,7 @@ function agregarMovimiento() {
         descripcion: descripcion,
         monto: valor,
         tipo: tipo,
-        fecha: new Date(fecha).toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'}),
+        fecha: fechaFormateada,
     };
 
     // Agregar el nuevo movimiento al array de movimientos precargados
@@ -75,7 +99,6 @@ function agregarMovimiento() {
     document.getElementById('valor').value = '';
     document.getElementById('fecha').value = '';
 
-    // Actualizar la visualización de los movimientos y el saldo
     mostrarMovimientos();
     verSaldoActual();
 
@@ -93,7 +116,6 @@ function mostrarMovimientos(tipoFiltrado = 'todos') {
     // Limpiar los elementos de la lista
     listaMovimientos.innerHTML = '';
 
-    // Filtrar los movimientos según el tipo seleccionado
     const movimientosFiltrados = tipoFiltrado === 'todos' ? movimientosPrecargados : movimientosPrecargados.filter(movimiento => movimiento.tipo === tipoFiltrado);
 
     // Recorrer los movimientos filtrados y agregarlos a la lista
@@ -109,7 +131,6 @@ function mostrarMovimientos(tipoFiltrado = 'todos') {
         listaMovimientos.appendChild(filaMovimiento);
     });
 
-    // Actualizar el total de ingresos y egresos
     document.getElementById('totalIngresos').textContent = `Total de Ingresos: ${calcularTotal('ingreso')} euros.`;
     document.getElementById('totalEgresos').textContent = `Total de Egresos: ${calcularTotal('egreso')} euros.`;
 }
@@ -133,22 +154,19 @@ function verSaldoActual() {
 // Función para eliminar un movimiento
 function eliminarMovimiento(id) {
     Swal.fire({
-        title: '¿Estás seguro que desea eliminarlo?',
+        title: '¿Estás seguro que deseas eliminarlo?',
         text: "No podrás revertir esta acción",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, eliminarlo'
+        confirmButtonText: 'Sí, eliminarlo',
+        cancelButtonText: 'Cancelar', 
     }).then((result) => {
         if (result.isConfirmed) {
-            // Filtrar el movimiento a eliminar del array de movimientos precargados
             movimientosPrecargados = movimientosPrecargados.filter(movimiento => movimiento.id !== id);
             
-            // Guardar los movimientos actualizados en localStorage
             guardarMovimientos(movimientosPrecargados);
-
-            // Actualizar la visualización de los movimientos
             mostrarMovimientos();
             verSaldoActual();
 
@@ -162,24 +180,19 @@ function eliminarMovimiento(id) {
 }
 
 // EVENTOS
-// Asignar eventos a los botones de filtro
 document.getElementById('btnTodos').addEventListener('click', () => mostrarMovimientos('todos'));
 document.getElementById('btnIngresos').addEventListener('click', () => mostrarMovimientos('ingreso'));
 document.getElementById('btnEgresos').addEventListener('click', () => mostrarMovimientos('egreso'));
-
-// Agregar un nuevo movimiento
 document.getElementById('agregarMovimientoBtn').addEventListener('click', agregarMovimiento);
 
-// Inicializar la página
 document.addEventListener('DOMContentLoaded', () => {
     cargarMovimientos();
 });
 
 // LOCALSTORAGE
-// Generar un ID único utilizando un contador en localStorage
 function generarIdUnico() {
     let contador = parseInt(localStorage.getItem('contadorID'), 10);
-    if (isNaN(contador)) contador = 4; // Inicializar el contador si no existe
+    if (isNaN(contador)) contador = 4; 
     contador += 1;
     localStorage.setItem('contadorID', contador.toString());
     return contador;
